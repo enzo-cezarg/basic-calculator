@@ -1,5 +1,6 @@
 import flet as ft
 from flet import colors
+from decimal import Decimal as dc
 
 botoes = [
         {'operador': 'AC', 'fonte': colors.WHITE, 'fundo': '#323232'},
@@ -41,7 +42,41 @@ def main(page: ft.Page):
     }
     page.theme = ft.Theme(font_family='JetBrains')
     
-    result = ft.Text(value=0, color=colors.WHITE, size=48)
+    result = ft.Text(value='0', color=colors.WHITE, size=48)
+
+    def calculate(op, valueAt):
+        try:
+            value = eval(valueAt)
+
+            if op == '%':
+                value = value/100
+            elif op == '±':
+                value = value*(-1)
+        except:
+            return 'Error!'
+        
+        digits = min(abs(dc(value).as_tuple().exponent), 5)
+        return format(value, f'.{digits}f')
+
+    def select(e):
+        valueAt = result.value if result.value not in ('0','Error!') else ''
+        value = e.control.content.value
+
+        if value.isdigit():
+            value = valueAt + value
+        elif value == 'AC':
+            value = '0'
+        else:
+            if valueAt and valueAt[-1] in ('/','*','+','-','.'):
+                valueAt = valueAt[:-1]
+
+            value = valueAt + value
+
+            if value[-1] in ('=','%','±'):
+                value = calculate(op=value[-1],valueAt=valueAt)
+
+        result.value = value
+        result.update()
 
     screen = ft.Row(
         width=300,
@@ -56,7 +91,8 @@ def main(page: ft.Page):
         height=50,
         border_radius=7,
         bgcolor=btn['fundo'],
-        alignment=ft.alignment.center
+        alignment=ft.alignment.center,
+        on_click=select
     ) for btn in botoes]
 
     keyboard = ft.Row(
